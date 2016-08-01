@@ -8,6 +8,7 @@ describe(require('path').basename(__filename), function () {
         WaitCompletionJob;
     var subscribeRequestPropertiesStub;
     var subscribeHttpResponseStub;
+    var subscribeTaskNotification;
 
     before(function() { 
         helper.setupInjector([
@@ -21,6 +22,10 @@ describe(require('path').basename(__filename), function () {
             WaitCompletionJob.prototype, '_subscribeHttpResponse', function(cb) {
                 cb({statusCode: 200, url: 'completion'});
         });
+        subscribeTaskNotification = sinon.stub(
+            WaitCompletionJob.prototype, '_subscribeTaskNotification', function(cb) {
+                cb({statusCode: 200, url: 'completion'});
+        });
     });
 
     it("should run", function() {
@@ -28,6 +33,7 @@ describe(require('path').basename(__filename), function () {
         job._run().then(function() {
             expect(subscribeRequestPropertiesStub).to.have.been.called;
             expect(subscribeHttpResponseStub).to.have.been.called;
+            expect(subscribeTaskNotification).to.have.been.called;
         });
     });
 });
