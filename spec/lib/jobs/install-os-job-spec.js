@@ -15,6 +15,8 @@ describe('Install OS Job', function () {
     var job;
     var waterline;
     var Promise;
+    var logger;
+    var loggerSpy;
 
     before(function() {
         helper.setupInjector(
@@ -28,6 +30,7 @@ describe('Install OS Job', function () {
 
         InstallOsJob = helper.injector.get('Job.Os.Install');
         waterline = helper.injector.get('Services.Waterline');
+        logger = helper.injector.get('Logger');
         Promise = helper.injector.get('Promise');
         subscribeRequestProfileStub = sinon.stub(
             InstallOsJob.prototype, '_subscribeRequestProfile');
@@ -190,6 +193,44 @@ describe('Install OS Job', function () {
         return job._run().then(function() {
             expect(subscribeHttpResponseStub).to.have.callCount(1);
             expect(job._done).to.have.not.been.called;
+        });
+    });
+
+    it('should finish job if task notification has expect complete status', function() {
+        subscribeTaskNotification.restore();
+        subscribeTaskNotification = sinon.stub(
+            InstallOsJob.prototype, '_subscribeTaskNotification', function(_taskId, callback) {
+                callback({
+                    taskId: job.taskId,
+                    data: {
+                        status: 'completed'
+                    }
+                });
+            });
+        return job._run().then(function() {
+            expect(subscribeHttpResponseStub).to.have.callCount(1);
+            expect(job._done).to.have.callCount(1);
+            expect(job._done.firstCall.args[0]).to.equal(undefined);
+        });
+    });
+
+    it('should not finish job if task notification has ongoing status', function() {
+        subscribeTaskNotification.restore();
+        subscribeTaskNotification = sinon.stub(
+            InstallOsJob.prototype, '_subscribeTaskNotification', function(_taskId, callback) {
+                callback({
+                    taskId: job.taskId,
+                    data: {
+                        status: 'inProgress',
+                        progress: 'osInstalled'
+                    }
+                });
+            });
+        loggerSpy = sinon.stub(logger.prototype, 'info').resolves({});
+        return job._run().then(function() {
+            expect(subscribeHttpResponseStub).to.have.callCount(1);
+            expect(job._done).to.have.not.been.called;
+            expect(loggerSpy).to.have.callCount(1);
         });
     });
 
