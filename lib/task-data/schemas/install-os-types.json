@@ -7,7 +7,7 @@
     "definitions": {
         "OsType": {
             "description": "The type of OS which is used by code internally",
-            "enum": [ "esx", "linux" ]
+            "enum": [ "esx", "linux", "ubuntu"]
         },
         "UserName": {
             "description": "The user account name",
